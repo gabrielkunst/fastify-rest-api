@@ -1,11 +1,20 @@
-import fastify from 'fastify';
-import { env } from './env';
+import fastify from "fastify";
+import { env } from "./env";
+import { transactionsRoutes } from "./routes/transactions";
+import {
+  serializerCompiler,
+  validatorCompiler,
+  ZodTypeProvider,
+} from "fastify-type-provider-zod";
 
-const app = fastify();
+const app = fastify().withTypeProvider<ZodTypeProvider>();
 
-app.get('/', async (req,res) => {
-  return res.status(200).send({ message: 'Hello World' });
-})
+app.setSerializerCompiler(serializerCompiler);
+app.setValidatorCompiler(validatorCompiler);
+
+app.register(transactionsRoutes, {
+  prefix: "/transactions",
+});
 
 app
   .listen({
