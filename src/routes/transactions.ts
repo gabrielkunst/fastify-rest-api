@@ -5,6 +5,34 @@ import { knex } from "../database";
 import { randomUUID } from "crypto";
 
 export async function transactionsRoutes(app: FastifyInstance) {
+  app.withTypeProvider<ZodTypeProvider>().get(
+    "/",
+    {
+      schema: {
+        response: {
+          200: z.object({
+            transactions: z.array(
+              z.object({
+                id: z.string().uuid(),
+                session_id: z.string().uuid().optional().nullable(),
+                title: z.string(),
+                amount: z.number(),
+                created_at: z.string(),
+              })
+            ),
+          }),
+        },
+      },
+    },
+    async () => {
+      const transactions = await knex("transactions").select("*");
+
+      return {
+        transactions,
+      };
+    }
+  );
+
   app.withTypeProvider<ZodTypeProvider>().post(
     "/",
     {
