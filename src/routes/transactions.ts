@@ -32,6 +32,34 @@ export async function transactionsRoutes(app: FastifyInstance) {
   );
 
   app.withTypeProvider<ZodTypeProvider>().get(
+    "/summary",
+    {
+      schema: {
+        response: {
+          200: z.object({
+            summary: z.object({
+              amount: z.number(),
+            }),
+          }),
+        },
+      },
+    },
+    async (req, res) => {
+      const summary = await knex("transactions")
+        .sum("amount", {
+          as: "amount",
+        })
+        .first();
+
+      return res.status(200).send({
+        summary: {
+          amount: summary?.amount ?? 0,
+        },
+      });
+    }
+  );
+
+  app.withTypeProvider<ZodTypeProvider>().get(
     "/:id",
     {
       schema: {
