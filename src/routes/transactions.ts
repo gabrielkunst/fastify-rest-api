@@ -4,6 +4,8 @@ import { z } from "zod";
 import { knex } from "../database";
 import { randomUUID } from "crypto";
 
+const SEVEN_DAYS_IN_SECONDS = 60 * 60 * 24 * 7;
+
 export async function transactionsRoutes(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get(
     "/",
@@ -114,10 +116,22 @@ export async function transactionsRoutes(app: FastifyInstance) {
     async (req, res) => {
       const { title, amount, type } = req.body;
 
+      let sessionId = req.cookies.sessionId;
+
+      if (!sessionId) {
+        sessionId = randomUUID();
+
+        res.cookie("sessionId", sessionId, {
+          path: "/",
+          maxAge: SEVEN_DAYS_IN_SECONDS,
+        });
+      }
+
       await knex("transactions").insert({
         id: randomUUID(),
         title,
         amount: type === "income" ? amount : amount * -1,
+        session_id: sessionId,
       });
 
       return res.status(201).send();

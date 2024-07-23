@@ -6,12 +6,14 @@ import {
   validatorCompiler,
   ZodTypeProvider,
 } from "fastify-type-provider-zod";
+import fastifyCookie from "@fastify/cookie";
 
 const app = fastify().withTypeProvider<ZodTypeProvider>();
 
 app.setSerializerCompiler(serializerCompiler);
 app.setValidatorCompiler(validatorCompiler);
 
+app.register(fastifyCookie);
 app.register(transactionsRoutes, {
   prefix: "/transactions",
 });
