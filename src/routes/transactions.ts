@@ -13,6 +13,8 @@ export async function transactionsRoutes(app: FastifyInstance) {
     {
       preHandler: [checkCookieSessionId],
       schema: {
+        tags: ["transactions"],
+        summary: "Get all transactions using sessionId",
         response: {
           200: z.object({
             transactions: z.array(
@@ -44,6 +46,8 @@ export async function transactionsRoutes(app: FastifyInstance) {
     {
       preHandler: [checkCookieSessionId],
       schema: {
+        tags: ["transactions"],
+        summary: "Get transactions summary",
         response: {
           200: z.object({
             summary: z.object({
@@ -76,6 +80,8 @@ export async function transactionsRoutes(app: FastifyInstance) {
     {
       preHandler: [checkCookieSessionId],
       schema: {
+        tags: ["transactions"],
+        summary: "Get transaction by id",
         params: z.object({
           id: z.string().uuid(),
         }),
@@ -123,6 +129,8 @@ export async function transactionsRoutes(app: FastifyInstance) {
     "/",
     {
       schema: {
+        tags: ["transactions"],
+        summary: "Create a new transaction",
         body: z.object({
           title: z.string().min(1),
           amount: z.number().positive(),
