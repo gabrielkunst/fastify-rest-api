@@ -1,5 +1,16 @@
+# Dependencies
 node_modules/
+
+# Build 
 dist/
+build/
+
+# Tests
 coverage/
-db.sqlite
+
+# Databases
+db/*.db
+
+# Env variables
 .env
+.env.test
