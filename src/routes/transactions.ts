@@ -3,6 +3,7 @@ import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { knex } from "../database";
 import { randomUUID } from "crypto";
+import { checkCookieSessionId } from "../middlewares/check-cookie-session-id";
 
 const SEVEN_DAYS_IN_SECONDS = 60 * 60 * 24 * 7;
 
@@ -10,6 +11,7 @@ export async function transactionsRoutes(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get(
     "/",
     {
+      preHandler: [checkCookieSessionId],
       schema: {
         response: {
           200: z.object({
@@ -27,7 +29,11 @@ export async function transactionsRoutes(app: FastifyInstance) {
       },
     },
     async (req, res) => {
-      const transactions = await knex("transactions").select("*");
+      const sessionId = req.cookies.sessionId;
+
+      const transactions = await knex("transactions")
+        .select("*")
+        .where("session_id", sessionId);
 
       return res.status(200).send({ transactions });
     }
@@ -36,6 +42,7 @@ export async function transactionsRoutes(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get(
     "/summary",
     {
+      preHandler: [checkCookieSessionId],
       schema: {
         response: {
           200: z.object({
@@ -47,7 +54,10 @@ export async function transactionsRoutes(app: FastifyInstance) {
       },
     },
     async (req, res) => {
+      const sessionId = req.cookies.sessionId;
+
       const summary = await knex("transactions")
+        .where("session_id", sessionId)
         .sum("amount", {
           as: "amount",
         })
@@ -64,6 +74,7 @@ export async function transactionsRoutes(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get(
     "/:id",
     {
+      preHandler: [checkCookieSessionId],
       schema: {
         params: z.object({
           id: z.string().uuid(),
@@ -78,19 +89,28 @@ export async function transactionsRoutes(app: FastifyInstance) {
               created_at: z.string(),
             }),
           }),
+          404: z.object({
+            message: z.string(),
+          }),
         },
       },
     },
     async (req, res) => {
+      const sessionId = req.cookies.sessionId;
       const { id } = req.params;
 
       const transaction = await knex("transactions")
         .select("*")
-        .where("id", id)
+        .where({
+          id,
+          session_id: sessionId,
+        })
         .first();
 
       if (!transaction) {
-        throw new Error("Transaction with provided ID was not found.");
+        return res.status(404).send({
+          message: "Transaction with provided ID was not found.",
+        });
       }
 
       return res.status(200).send({
